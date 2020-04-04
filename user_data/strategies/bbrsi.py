@@ -1,4 +1,5 @@
-# pragma pylint: disable=missing-docstring, invalid-name, pointless-string-statement
+# pragma pylint: disable=missing-docstring, invalid-name
+# pragma pyline: disable=pointless-string-statement
 
 # --- Do not remove these libs ---
 import numpy as np  # noqa
@@ -149,7 +150,7 @@ class BasicStrategy(IStrategy):
         # dataframe['cci'] = ta.CCI(dataframe)
 
         # RSI
-        # dataframe['rsi'] = ta.RSI(dataframe)
+        dataframe['rsi'] = ta.RSI(dataframe)
 
         # # Inverse Fisher transform on RSI: values [-1.0, 1.0]
         # rsi = 0.1 * (dataframe['rsi'] - 50)
@@ -191,7 +192,7 @@ class BasicStrategy(IStrategy):
 
         # Bollinger Bands
         bollinger = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe),
-                                            window=20, stds=2)
+                                            window=20, stds=3)
         dataframe['bb_lowerband'] = bollinger['lower']
         dataframe['bb_middleband'] = bollinger['mid']
         dataframe['bb_upperband'] = bollinger['upper']
@@ -201,7 +202,7 @@ class BasicStrategy(IStrategy):
         )
         dataframe["bb_width"] = (
             (dataframe["bb_upperband"] - dataframe["bb_lowerband"]) /
-                                         dataframe["bb_middleband"]
+            dataframe["bb_middleband"]
         )
 
         # Bollinger Bands - Weighted (EMA based instead of SMA)

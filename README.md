@@ -7,4 +7,5 @@ docker-compose build
 
 ## Running
 
-docker-compose run -d freqtrade trade --strategy SampleStrategy
+docker-compose run -d freqtrade trade --strategy strategy_name
+docker-compose run freqtrade hyperopt --hyperopt HyperOptBBRSI -e 100 --strategy strategy_name
