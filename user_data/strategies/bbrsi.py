@@ -15,19 +15,20 @@ import freqtrade.vendor.qtpylib.indicators as qtpylib
 
 
 # This class is a sample. Feel free to customize it.
-class BasicStrategy(IStrategy):
+class BB3RSIStrategy(IStrategy):
     INTERFACE_VERSION = 2
 
     # Minimal ROI designed for the strategy.
     minimal_roi = {
-        "60": 0.01,
-        "30": 0.02,
-        "0": 0.04
+        "1130": 0,
+        "323": 0.02425,
+        "125": 0.10237,
+        "0": 0.51888
     }
 
     # Optimal stoploss designed for the strategy.
     # This attribute will be overridden if the config file contains "stoploss".
-    stoploss = -0.10
+    stoploss = -0.30185
 
     # Trailing stoploss
     trailing_stop = False
@@ -329,7 +330,8 @@ class BasicStrategy(IStrategy):
         """
         dataframe.loc[
             (
-                dataframe['close'] < dataframe['bb_lowerband']
+                (dataframe['close'] < dataframe['bb_lowerband']) &
+                (dataframe['rsi'] <= 31)
             ),
             'buy'] = 1
 
@@ -347,7 +349,8 @@ class BasicStrategy(IStrategy):
         """
         dataframe.loc[
             (
-                dataframe['close'] > dataframe['bb_middleband']
+                (dataframe['close'] > dataframe['bb_middleband']) &
+                (dataframe['rsi'] >= 61)
             ),
             'sell'] = 1
         return dataframe

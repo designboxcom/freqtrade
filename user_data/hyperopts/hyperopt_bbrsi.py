@@ -116,7 +116,7 @@ class HyperOptBBRSI(IHyperOpt):
         dataframe.loc[
             (
                 (dataframe['close'] < dataframe['bb_lowerband']) &
-                (dataframe['rsi'] < 30)
+                (dataframe['rsi'] <= 31)
             ),
             'buy'] = 1
 
@@ -134,7 +134,8 @@ class HyperOptBBRSI(IHyperOpt):
         """
         dataframe.loc[
             (
-                dataframe['close'] > dataframe['bb_middleband']
+                (dataframe['close'] > dataframe['bb_middleband']) &
+                (dataframe['rsi'] >= 56)
             ),
             'sell'] = 1
         return dataframe
