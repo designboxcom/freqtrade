@@ -14,7 +14,7 @@ import talib.abstract as ta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 
 
-class BBL3H3RSIStdStrategy2(IStrategy):
+class BBL3H2RSIStdStrategy(IStrategy):
     """
     Strategy: optimized for standard loss function
 
