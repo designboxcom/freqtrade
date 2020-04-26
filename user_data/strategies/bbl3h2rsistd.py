@@ -39,10 +39,10 @@ class BBL3H2RSIStdStrategy(IStrategy):
 
     # Minimal ROI designed for the strategy.
     minimal_roi = {
-        0: 0.26832,
-        469: 0.10558,
-        1177: 0.04734,
-        2554: 0
+        "0": 0.26832,
+        "469": 0.10558,
+        "1177": 0.04734,
+        "2554": 0
     }
 
     # Optimal stoploss designed for the strategy.
