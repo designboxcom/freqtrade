@@ -216,7 +216,7 @@ class BBL3H2RSIStdStrategy(IStrategy):
         dataframe['bb_lowerband3'] = bollinger3['lower']
 
         bollinger2 = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe),
-                                             window=20, stds=3)
+                                             window=20, stds=2)
         dataframe['bb_upperband2'] = bollinger2['upper']
 
         # dataframe["bb_percent"] = (
@@ -374,7 +374,7 @@ class BBL3H2RSIStdStrategy(IStrategy):
             (
                 (dataframe['close'] > dataframe['bb_upperband2']) &
                 (dataframe['mfi'] >= 92) &
-                (dataframe['mfi'] >= 83)
+                (dataframe['rsi'] >= 83)
             ),
             'sell'] = 1
         return dataframe
