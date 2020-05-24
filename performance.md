@@ -151,4 +151,4 @@ because the sell signal is too early?
 Things to consider:
 * It seems that the stop loss is not active, to check
 * Not sure if both MFI and RSI are useful together
-* Selling at h3 seems to late
+* Selling at h3 seems too late

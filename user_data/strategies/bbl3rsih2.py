@@ -14,11 +14,11 @@ import talib.abstract as ta
 import freqtrade.vendor.qtpylib.indicators as qtpylib
 
 
-class BBL3H1RSIStrategy(IStrategy):
+class BBL3RSIH2Strategy(IStrategy):
     """
     Strategy: based on BBL3H2RSIStdStrategy, with the following modifications:
         - removed MFI for both buy and sell signals
-        - changed bb high2 to bb high 1 for the sell signal
+        - removed RSI for sell signal
     """
 
     INTERFACE_VERSION = 2
@@ -201,9 +201,9 @@ class BBL3H1RSIStrategy(IStrategy):
                                              window=20, stds=3)
         dataframe['bb_lowerband3'] = bollinger3['lower']
 
-        bollinger1 = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe),
-                                             window=20, stds=1)
-        dataframe['bb_upperband1'] = bollinger1['upper']
+        bollinger2 = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe),
+                                             window=20, stds=2)
+        dataframe['bb_upperband2'] = bollinger2['upper']
 
         # dataframe["bb_percent"] = (
         #     (dataframe["close"] - dataframe["bb_lowerband"]) /
@@ -357,7 +357,7 @@ class BBL3H1RSIStrategy(IStrategy):
         """
         dataframe.loc[
             (
-                (dataframe['close'] > dataframe['bb_upperband1'])
+                (dataframe['close'] > dataframe['bb_upperband2'])
             ),
             'sell'] = 1
         return dataframe
