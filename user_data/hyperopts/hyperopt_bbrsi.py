@@ -17,7 +17,7 @@ from freqtrade.optimize.hyperopt_interface import IHyperOpt
 import talib.abstract as ta  # noqa
 
 
-class HyperOptBBRSI(IHyperOpt):
+class HyperOptBBL3RSIH2(IHyperOpt):
     @staticmethod
     def buy_strategy_generator(params: Dict[str, Any]) -> Callable:
         """
@@ -33,17 +33,9 @@ class HyperOptBBRSI(IHyperOpt):
             # GUARDS AND TRENDS
             if 'rsi-enabled' in params and params['rsi-enabled']:
                 conditions.append(dataframe['rsi'] < params['rsi-value'])
-            if 'mfi-enabled' in params and params['mfi-enabled']:
-                conditions.append(dataframe['mfi'] < params['mfi-value'])
 
             # TRIGGERS
             if 'trigger' in params:
-                if params['trigger'] == 'bb_lower1':
-                    conditions.append(dataframe['close'] <
-                                      dataframe['bb_lowerband1'])
-                if params['trigger'] == 'bb_lower2':
-                    conditions.append(dataframe['close'] <
-                                      dataframe['bb_lowerband2'])
                 if params['trigger'] == 'bb_lower3':
                     conditions.append(dataframe['close'] <
                                       dataframe['bb_lowerband3'])
@@ -64,11 +56,8 @@ class HyperOptBBRSI(IHyperOpt):
         """
         return [
             Integer(20, 50, name='rsi-value'),
-            Integer(20, 50, name='mfi-value'),
             Categorical([True, False], name='rsi-enabled'),
-            Categorical([True, False], name='mfi-enabled'),
-            Categorical(['bb_lower1', 'bb_lower2', 'bb_lower3'],
-                        name='trigger')
+            Categorical(['bb_lower3'], name='trigger')
         ]
 
     @staticmethod
@@ -84,10 +73,6 @@ class HyperOptBBRSI(IHyperOpt):
             conditions = []
 
             # GUARDS AND TRENDS
-            if 'sell-rsi-enabled' in params and params['sell-rsi-enabled']:
-                conditions.append(dataframe['rsi'] > params['sell-rsi-value'])
-            if 'sell-mfi-enabled' in params and params['sell-mfi-enabled']:
-                conditions.append(dataframe['mfi'] > params['sell-mfi-value'])
 
             # TRIGGERS
             if 'sell-trigger' in params:
@@ -100,9 +85,6 @@ class HyperOptBBRSI(IHyperOpt):
                 if params['sell-trigger'] == 'sell-bb_high2':
                     conditions.append(dataframe['close'] >
                                       dataframe['bb_upperband2'])
-                if params['sell-trigger'] == 'sell-bb_high3':
-                    conditions.append(dataframe['close'] >
-                                      dataframe['bb_upperband3'])
 
             if conditions:
                 dataframe.loc[
@@ -119,14 +101,9 @@ class HyperOptBBRSI(IHyperOpt):
         Define your Hyperopt space for searching sell strategy parameters.
         """
         return [
-            Integer(50, 100, name='sell-rsi-value'),
-            Integer(50, 100, name='sell-mfi-value'),
-            Categorical([True, False], name='sell-rsi-enabled'),
-            Categorical([True, False], name='sell-mfi-enabled'),
             Categorical(['sell-bb_middle',
                          'sell-bb_high1',
-                         'sell-bb_high2',
-                         'sell-bb_high3'
+                         'sell-bb_high2'
                          ],
                         name='sell-trigger')
         ]
@@ -143,8 +120,8 @@ class HyperOptBBRSI(IHyperOpt):
         """
         dataframe.loc[
             (
-                (dataframe['close'] < dataframe['bb_lowerband']) &
-                (dataframe['rsi'] <= 31)
+                (dataframe['close'] < dataframe['bb_lowerband3']) &
+                (dataframe['rsi'] <= 30)
             ),
             'buy'] = 1
 
@@ -162,8 +139,7 @@ class HyperOptBBRSI(IHyperOpt):
         """
         dataframe.loc[
             (
-                (dataframe['close'] > dataframe['bb_middleband']) &
-                (dataframe['rsi'] >= 56)
+                (dataframe['close'] > dataframe['bb_upperband2'])
             ),
             'sell'] = 1
         return dataframe
