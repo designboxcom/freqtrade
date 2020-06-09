@@ -200,6 +200,11 @@ class BBL3RSIH2Strategy(IStrategy):
         bollinger3 = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe),
                                              window=20, stds=3)
         dataframe['bb_lowerband3'] = bollinger3['lower']
+        dataframe['bb_middleband'] = bollinger3['middle']
+
+        bollinger1 = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe),
+                                             window=20, stds=1)
+        dataframe['bb_upperband1'] = bollinger1['upper']
 
         bollinger2 = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe),
                                              window=20, stds=2)
