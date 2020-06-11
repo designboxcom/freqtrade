@@ -79,12 +79,6 @@ class HyperOptBBL3RSIH2(IHyperOpt):
                 if params['sell-trigger'] == 'sell-bb_middle':
                     conditions.append(dataframe['close'] >
                                       dataframe['bb_middleband'])
-                if params['sell-trigger'] == 'sell-bb_high1':
-                    conditions.append(dataframe['close'] >
-                                      dataframe['bb_upperband1'])
-                if params['sell-trigger'] == 'sell-bb_high2':
-                    conditions.append(dataframe['close'] >
-                                      dataframe['bb_upperband2'])
 
             if conditions:
                 dataframe.loc[
@@ -101,9 +95,7 @@ class HyperOptBBL3RSIH2(IHyperOpt):
         Define your Hyperopt space for searching sell strategy parameters.
         """
         return [
-            Categorical(['sell-bb_middle',
-                         'sell-bb_high1',
-                         'sell-bb_high2'
+            Categorical(['sell-bb_middle'
                          ],
                         name='sell-trigger')
         ]
