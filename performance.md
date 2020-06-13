@@ -152,3 +152,76 @@ Things to consider:
 * It seems that the stop loss is not active, to check
 * Not sure if both MFI and RSI are useful together
 * Selling at h3 seems too late
+
+## June 2020
+
+3 strategies:
+* bbl3h1rsi
+* bbl3h2rsistd
+* bbl3rsih2
+
+### Context
+
+BTC back to business after COVID-19 (around 9800 USD). Hoped that the bbl3rsih2
+would perform better than the bbl3h2rsistd because the sell signal should be
+easier (no RSI). Best performer over 2 weeks is bbl3h2rsistd.
+
+#### bbl3h1rsi
+
+ROI: Close trades
+∙ 0.01482375 BTC (1.85%)
+∙ 123.689 EUR
+ROI: All trades
+∙ 0.01389228 BTC (1.71%)
+∙ 115.917 EUR
+Total Trade Count: 81
+First Trade opened: 2 weeks ago
+Latest Trade opened: 20 hours ago
+Avg. Duration: 22:37:15
+Best Performing: WABI/BTC: 12.83%
+
+#### bbl3h2rsistd
+
+ROI: Close trades
+∙ 0.01805065 BTC (3.22%)
+∙ 151.356 EUR
+ROI: All trades
+∙ 0.01504097 BTC (2.21%)
+∙ 126.119 EUR
+Total Trade Count: 68
+First Trade opened: 2 weeks ago
+Latest Trade opened: 20 hours ago
+Avg. Duration: 1 day, 16:32:19
+Best Performing: WABI/BTC: 26.06%
+
+#### bbl3rsih2
+
+ROI: Close trades
+∙ 0.01626028 BTC (2.35%)
+∙ 135.676 EUR
+ROI: All trades
+∙ 0.01624911 BTC (2.08%)
+∙ 135.582 EUR
+Total Trade Count: 78
+First Trade opened: 2 weeks ago
+Latest Trade opened: 20 hours ago
+Avg. Duration: 1 day, 4:34:39
+Best Performing: WABI/BTC: 26.29%
+
+### Conclusions
+
+bbl3h2rsistd is a good candidate for real money trading, performed well
+during the crisis and out of it. bbl3rsih2 a bit disappointing, although not
+too bad.
+
+In parallel, done some simulation:
+
+Buy hyperspace params:
+{'rsi-enabled': False, 'rsi-value': 44, 'trigger': 'bb_lower3'}
+Sell hyperspace params:
+{'sell-trigger': 'sell-bb_high1'}
+ROI table:
+{0: 0.15731, 157: 0.11198, 662: 0.03768, 1081: 0}
+Stoploss: -0.20001
+
+Will try that with paper money.
