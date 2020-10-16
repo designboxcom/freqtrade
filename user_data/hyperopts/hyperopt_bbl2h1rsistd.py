@@ -17,7 +17,7 @@ from freqtrade.optimize.hyperopt_interface import IHyperOpt
 import talib.abstract as ta  # noqa
 
 
-class HyperOptBBLxHy(IHyperOpt):
+class HyperOptBBL2H1RSI(IHyperOpt):
     @staticmethod
     def buy_strategy_generator(params: Dict[str, Any]) -> Callable:
         """
@@ -39,12 +39,6 @@ class HyperOptBBLxHy(IHyperOpt):
                 if params['trigger'] == 'bb_lower2':
                     conditions.append(dataframe['close'] <
                                       dataframe['bb_lowerband2'])
-                if params['trigger'] == 'bb_lower1':
-                    conditions.append(dataframe['close'] <
-                                      dataframe['bb_lowerband1'])
-                if params['trigger'] == 'bb_middle':
-                    conditions.append(dataframe['close'] <
-                                      dataframe['bb_middleband'])
 
             if conditions:
                 dataframe.loc[
@@ -63,7 +57,7 @@ class HyperOptBBLxHy(IHyperOpt):
         return [
             Integer(20, 50, name='rsi-value'),
             Categorical([True, False], name='rsi-enabled'),
-            Categorical(['bb_lower2', 'bb_lower1', 'bb_middle'], name='trigger')
+            Categorical(['bb_lower2'], name='trigger')
         ]
 
     @staticmethod
@@ -79,24 +73,14 @@ class HyperOptBBLxHy(IHyperOpt):
             conditions = []
 
             # GUARDS AND TRENDS
+            if 'sell-rsi-enabled' in params and params['sell-rsi-enabled']:
+                conditions.append(dataframe['rsi'] < params['sell-rsi-value'])
 
             # TRIGGERS
             if 'sell-trigger' in params:
-                if params['sell-trigger'] == 'sell-bb_lower2':
-                    conditions.append(dataframe['close'] >
-                                      dataframe['bb_lowerband2'])
-                if params['sell-trigger'] == 'sell-bb_lower1':
-                    conditions.append(dataframe['close'] >
-                                      dataframe['bb_lowerband1'])
-                if params['sell-trigger'] == 'sell-bb_middle':
-                    conditions.append(dataframe['close'] >
-                                      dataframe['bb_middleband'])
                 if params['sell-trigger'] == 'sell-bb_upper1':
                     conditions.append(dataframe['close'] >
-                                      dataframe['bb_upper1'])
-                if params['sell-trigger'] == 'sell-bb_upper2':
-                    conditions.append(dataframe['close'] >
-                                      dataframe['bb_upper2'])
+                                      dataframe['bb_upperband1'])
 
             if conditions:
                 dataframe.loc[
@@ -113,9 +97,9 @@ class HyperOptBBLxHy(IHyperOpt):
         Define your Hyperopt space for searching sell strategy parameters.
         """
         return [
-            Categorical(['sell-bb_lower2', 'sell-bb_lower1',
-                         'sell-bb_middle', 'sell-bb_upper1',
-                         'sell-bb_upper2'], name='trigger')
+            Integer(70, 100, name='sell-rsi-value'),
+            Categorical([True, False], name='rsi-enabled'),
+            Categorical(['bb_upper1'], name='sell-trigger')
         ]
 
     def populate_buy_trend(self,
@@ -130,7 +114,7 @@ class HyperOptBBLxHy(IHyperOpt):
         """
         dataframe.loc[
             (
-                (dataframe['close'] < dataframe['bb_lowerband3']) &
+                (dataframe['close'] < dataframe['bb_lowerband2']) &
                 (dataframe['rsi'] <= 30)
             ),
             'buy'] = 1
@@ -149,7 +133,7 @@ class HyperOptBBLxHy(IHyperOpt):
         """
         dataframe.loc[
             (
-                (dataframe['close'] > dataframe['bb_upperband2'])
+                (dataframe['close'] > dataframe['bb_upperband1'])
             ),
             'sell'] = 1
         return dataframe

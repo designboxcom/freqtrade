@@ -213,11 +213,11 @@ class BBL3H2RSIStdStrategy(IStrategy):
         # Bollinger Bands
         bollinger3 = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe),
                                              window=20, stds=3)
-        dataframe['bb_lowerband3'] = bollinger3['lower']
+        dataframe['bb_lowerband2'] = bollinger3['lower']
 
         bollinger2 = qtpylib.bollinger_bands(qtpylib.typical_price(dataframe),
                                              window=20, stds=2)
-        dataframe['bb_upperband2'] = bollinger2['upper']
+        dataframe['bb_upperband1'] = bollinger2['upper']
 
         # dataframe["bb_percent"] = (
         #     (dataframe["close"] - dataframe["bb_lowerband"]) /

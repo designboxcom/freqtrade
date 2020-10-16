@@ -15,7 +15,7 @@ import freqtrade.vendor.qtpylib.indicators as qtpylib
 
 
 # This class is a sample. Feel free to customize it.
-class BB3RSIForHyperoptsStrategy(IStrategy):
+class BBForHyperoptsStrategy(IStrategy):
     INTERFACE_VERSION = 2
 
     # Minimal ROI designed for the strategy.
