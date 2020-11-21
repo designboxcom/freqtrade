@@ -83,7 +83,11 @@ class Prompt(cmd.Cmd):
             time.sleep(0.5)
         self._stop_event.clear()
 
-    def _execute(self, cmd, show_cpu_usage=False):
+    def _execute(self, cmd,
+                 show_cpu_usage=False,
+                 print_stderr=False,
+                 stderr_only_on_nonzero_returncode=True,
+                 print_stdout=False):
         self._debug('execution command: ' + ' '.join(cmd))
 
         if show_cpu_usage:
@@ -99,6 +103,14 @@ class Prompt(cmd.Cmd):
 
         self._debug('stdout of command: ' + output.stdout.decode('UTF-8'))
         self._debug('stderr of command: ' + output.stderr.decode('UTF-8'))
+
+        if print_stdout:
+            print(output.stdout.decode('UTF-8')[:-1])
+
+        if print_stderr:
+            if not stderr_only_on_nonzero_returncode or \
+              (stderr_only_on_nonzero_returncode and output.returncode != 0):
+                print(output.stderr.decode('UTF-8')[:-1])
 
         return output
 
@@ -176,12 +188,42 @@ class Prompt(cmd.Cmd):
                 self._hyperopts.append(class_name)
             print(f'{class_name} [{status}] in file {file_name}')
 
-    def complete_test(self, text, line, begidx, endidx):
-        keywords = ['yo', 'yo2', 'hello']
-        return [i for i in keywords if i.startswith(text)]
+    def complete_queue(self, text, line, begidx, endidx):
+        keywords = ['list', 'clear', 'remove', 'movefirst', 'outputfile']
+        return [k for k in keywords if k.startswith(text)]
 
-    def do_test(self, arg):
-        print(arg)
+    def do_queue(self, arg):
+        '''Manage the task spooler queue'''
+
+        def execute_on_valid_job_number(command_flag):
+            raw_job_number = input('job number (return to ignore)? ')
+            try:
+                int(raw_job_number)
+                command = [*self.queue_cmd, command_flag, raw_job_number]
+                self._execute(command, print_stderr=True)
+            except ValueError:
+                print('doing nothing')
+                return
+
+        if arg == 'list':
+            self._execute(self.queue_cmd, print_stdout=True)
+
+        elif arg == 'clear':
+            cmd = [*self.queue_cmd, '-C']
+            self._execute(cmd)
+
+        elif arg == 'remove':
+            execute_on_valid_job_number('-r')
+
+        elif arg == 'movefirst':
+            execute_on_valid_job_number('-u')
+
+        elif arg == 'outputfile':
+            execute_on_valid_job_number('-o')
+
+        else:
+            print(f'unknown command: {arg}')
+            return
 
     def do_quit(self, arg):
         '''quit the program'''
