@@ -14,9 +14,9 @@ CONFIG_TELEGRAM = os.path.join(CONFIG_DIR, 'config-telegram-simu.json')
 CONFIG_EXCHANGE = os.path.join(CONFIG_DIR,
                                'config-exchange-binance-notrade-for-simu.json')
 LOG_DIR = os.path.join('user_data', 'log')
-NBDAYS = 60
-EPOCHS = 50
-TICK = '1h'
+DEFAULT_NBDAYS = 60
+DEFAULT_EPOCHS = 50
+DEFAULT_TICK = '1h'
 
 
 def get_key():
@@ -55,6 +55,7 @@ class Prompt(cmd.Cmd):
         self._check_prerequisites()
         self._hyperopts = []
         self._stop_event = threading.Event()
+        self._last_output = None
 
     def _check_prerequisites(self):
         '''Check that docker and other elements are configured'''
@@ -102,6 +103,7 @@ class Prompt(cmd.Cmd):
             t.start()
 
         output = subprocess.run(command, capture_output=True)
+        self._last_output = output
 
         if show_cpu_usage:
             self._stop_event.set()
@@ -125,6 +127,14 @@ class Prompt(cmd.Cmd):
         '''Print message only when debug is enabled'''
         if self._debug_enabled:
             print('** DEBUG ** ' + msg)
+
+    def _input_number(self, msg, default=None):
+        raw_number = input(msg)
+        try:
+            number = int(raw_number)
+        except ValueError:
+            number = default
+        return number
 
     def do_version(self, arg):
         '''Version of freqtrade, useful to test if docker is working'''
@@ -170,12 +180,23 @@ class Prompt(cmd.Cmd):
                 print('doing nothing')
                 return
 
+        tick = input(f'input tick ? [{DEFAULT_TICK}] ')
+        if tick == '':
+            tick = DEFAULT_TICK
+
+        nbdays = self._input_number('nb of days for historical data? '
+                                    f'[{DEFAULT_NBDAYS}]',
+                                    default=DEFAULT_NBDAYS)
+
+        epochs = self._input_number(f'number of epochs? [{DEFAULT_EPOCHS}]',
+                                    default=DEFAULT_EPOCHS)
+
         print('downloading data...')
         command = [*self.ft_cmd,
                    'download-data',
                    *self.ft_config,
-                   '-t', str(TICK),
-                   '--days', str(NBDAYS),
+                   '-t', str(tick),
+                   '--days', str(nbdays),
                    '--exchange', 'binance']
         self._execute(command, queueable=True, show_cpu_usage=True)
 
@@ -187,7 +208,7 @@ class Prompt(cmd.Cmd):
                    '--hyperopt', arg,
                    '--logfile', os.path.join(LOG_DIR, arg + '.log'),
                    '--hyperopt-loss', 'DefaultHyperOptLoss',
-                   '-e', str(EPOCHS)]
+                   '-e', str(epochs)]
         self._execute(command, queueable=True, show_cpu_usage=True)
 
     def do_list_hyperopts(self, arg):
@@ -244,6 +265,10 @@ class Prompt(cmd.Cmd):
         else:
             print(f'unknown command: {arg}')
             return
+
+    def do_last_output(self, arg):
+        '''Display the output of the last command'''
+        print(self._last_output)
 
     def do_quit(self, arg):
         '''Quit the program'''
