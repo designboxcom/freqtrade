@@ -39,7 +39,7 @@ def get_key():
 class Prompt(cmd.Cmd):
     '''Use Prompt().cmdloop()'''
 
-    prompt = '> '
+    prompt = '>> '
     queue_cmd = ['tsp']
     ft_cmd = ['docker-compose',
               'run',
@@ -51,12 +51,13 @@ class Prompt(cmd.Cmd):
     def __init__(self):
         super().__init__()
         self._debug_enabled = False
+        self._queue_enabled = True
         self._check_prerequisites()
         self._hyperopts = []
         self._stop_event = threading.Event()
 
     def _check_prerequisites(self):
-        '''check that docker and other elements are configured'''
+        '''Check that docker and other elements are configured'''
         commands = ['docker', 'docker-compose', 'tsp']
         for command in commands:
             if shutil.which(command) is None:
@@ -78,23 +79,29 @@ class Prompt(cmd.Cmd):
                 sys.exit(1)
 
     def _cpu_load(self):
+        '''Basic cpu usage percentage, to use in a thread'''
         while(not self._stop_event.wait(0.5)):
             print(f'cpu usage: {psutil.cpu_percent():6.2f}', end='\r')
             time.sleep(0.5)
         self._stop_event.clear()
 
-    def _execute(self, cmd,
+    def _execute(self, raw_command,
+                 queueable=False,
                  show_cpu_usage=False,
                  print_stderr=False,
                  stderr_only_on_nonzero_returncode=True,
                  print_stdout=False):
-        self._debug('execution command: ' + ' '.join(cmd))
+        '''Queue or execute immediately the command'''
+        command = raw_command
+        if queueable and self._queue_enabled:
+            command = [*self.queue_cmd, *raw_command]
+        self._debug('execution command: ' + ' '.join(command))
 
         if show_cpu_usage:
             t = threading.Thread(target=self._cpu_load)
             t.start()
 
-        output = subprocess.run(cmd, capture_output=True)
+        output = subprocess.run(command, capture_output=True)
 
         if show_cpu_usage:
             self._stop_event.set()
@@ -115,11 +122,12 @@ class Prompt(cmd.Cmd):
         return output
 
     def _debug(self, msg):
+        '''Print message only when debug is enabled'''
         if self._debug_enabled:
             print('** DEBUG ** ' + msg)
 
     def do_version(self, arg):
-        '''version of freqtrade, useful to test if docker is working'''
+        '''Version of freqtrade, useful to test if docker is working'''
         command = ['docker-compose',
                    'run',
                    'freqtrade',
@@ -138,10 +146,21 @@ class Prompt(cmd.Cmd):
         self._debug_enabled = not self._debug_enabled
         print(f'debug enabled is now {self._debug_enabled}')
 
+    def do_toggle_queue(self, arg):
+        '''Toggle queue mode or immediate'''
+        self._queue_enabled = not self._queue_enabled
+        print(f'queue enabled is now {self._queue_enabled}')
+
+    def do_show_config(self, arg):
+        '''Display the current state of the togglable elements'''
+        print(f'debug enabled is {self._debug_enabled}')
+        print(f'queue enabled is {self._queue_enabled}')
+
     def complete_run_hyperopt(self, text, line, begidx, endidx):
         return [s for s in self._hyperopts if s.startswith(text)]
 
     def do_run_hyperopt(self, arg):
+        '''Queue or execute an hyperopt computation'''
         if arg not in self._hyperopts:
             print(f'requested hyperopt class {arg} is not in the known '
                   f'valid list {", ".join(self._hyperopts)}')
@@ -152,32 +171,33 @@ class Prompt(cmd.Cmd):
                 return
 
         print('downloading data...')
-        cmd = [*self.ft_cmd,
-               'download-data',
-               *self.ft_config,
-               '-t', str(TICK),
-               '--days', str(NBDAYS),
-               '--exchange', 'binance']
-        self._execute(cmd, show_cpu_usage=True)
+        command = [*self.ft_cmd,
+                   'download-data',
+                   *self.ft_config,
+                   '-t', str(TICK),
+                   '--days', str(NBDAYS),
+                   '--exchange', 'binance']
+        self._execute(command, queueable=True, show_cpu_usage=True)
 
         print('running hyperopt...')
-
-        cmd = [*self.ft_cmd,
-               'hyperopt',
-               *self.ft_config,
-               '--strategy', 'BBL3H2RSIStdStrategy',
-               '--hyperopt', arg,
-               '--logfile', os.path.join(LOG_DIR, arg + '.log'),
-               '--hyperopt-loss', 'DefaultHyperOptLoss',
-               '-e', str(EPOCHS)]
-        self._execute(cmd, show_cpu_usage=True)
+        command = [*self.ft_cmd,
+                   'hyperopt',
+                   *self.ft_config,
+                   '--strategy', 'BBL3H2RSIStdStrategy',
+                   '--hyperopt', arg,
+                   '--logfile', os.path.join(LOG_DIR, arg + '.log'),
+                   '--hyperopt-loss', 'DefaultHyperOptLoss',
+                   '-e', str(EPOCHS)]
+        self._execute(command, queueable=True, show_cpu_usage=True)
 
     def do_list_hyperopts(self, arg):
-        cmd = [*self.ft_cmd, 'list-hyperopts']
-        output = self._execute(cmd)
-
+        '''Retrieve hyperopts list from freqtrade'''
+        command = [*self.ft_cmd, 'list-hyperopts']
+        output = self._execute(command)
         raw_output = output.stdout.decode('UTF-8')
         for raw_line in raw_output.splitlines():
+            # ft outputs a table so we need to analyze it, the parser-friendly
+            # version does not contain as much info
             if not raw_line.startswith('| '):
                 continue
             line = raw_line.split('|')
@@ -209,8 +229,8 @@ class Prompt(cmd.Cmd):
             self._execute(self.queue_cmd, print_stdout=True)
 
         elif arg == 'clear':
-            cmd = [*self.queue_cmd, '-C']
-            self._execute(cmd)
+            command = [*self.queue_cmd, '-C']
+            self._execute(command)
 
         elif arg == 'remove':
             execute_on_valid_job_number('-r')
@@ -226,7 +246,7 @@ class Prompt(cmd.Cmd):
             return
 
     def do_quit(self, arg):
-        '''quit the program'''
+        '''Quit the program'''
         return True
 
 
