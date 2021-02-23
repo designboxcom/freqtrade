@@ -53,9 +53,23 @@ class Prompt(cmd.Cmd):
         self._debug_enabled = False
         self._queue_enabled = True
         self._check_prerequisites()
-        self._hyperopts = []
+        self._hyperopts = {}
+        self._strategies = {}
         self._stop_event = threading.Event()
         self._last_output = None
+
+    def _analyze_table(self, table, output_dict):
+        '''Analyze the list table provided by ft for hyperopts or strategies'''
+        for raw_line in table.splitlines():
+            if not raw_line.startswith('| '):
+                continue
+            line = raw_line.split('|')
+            _, class_name, filename, status, _ = [s.strip() for s in line]
+            if class_name == 'name':
+                continue
+            if class_name not in output_dict.keys():
+                output_dict[class_name] = {'status': status,
+                                           'filename': filename}
 
     def _check_prerequisites(self):
         '''Check that docker and other elements are configured'''
@@ -85,6 +99,11 @@ class Prompt(cmd.Cmd):
             print(f'cpu usage: {psutil.cpu_percent():6.2f}', end='\r')
             time.sleep(0.5)
         self._stop_event.clear()
+
+    def _debug(self, msg):
+        '''Print message only when debug is enabled'''
+        if self._debug_enabled:
+            print('** DEBUG ** ' + msg)
 
     def _execute(self, raw_command,
                  queueable=False,
@@ -122,11 +141,6 @@ class Prompt(cmd.Cmd):
                 print(output.stderr.decode('UTF-8')[:-1])
 
         return output
-
-    def _debug(self, msg):
-        '''Print message only when debug is enabled'''
-        if self._debug_enabled:
-            print('** DEBUG ** ' + msg)
 
     def _input_number(self, msg, default=None):
         raw_number = input(msg)
@@ -216,18 +230,29 @@ class Prompt(cmd.Cmd):
         command = [*self.ft_cmd, 'list-hyperopts']
         output = self._execute(command)
         raw_output = output.stdout.decode('UTF-8')
-        for raw_line in raw_output.splitlines():
-            # ft outputs a table so we need to analyze it, the parser-friendly
-            # version does not contain as much info
-            if not raw_line.startswith('| '):
-                continue
-            line = raw_line.split('|')
-            _, class_name, file_name, status, _ = [s.strip() for s in line]
-            if class_name == 'name':
-                continue
-            if status == 'OK' and class_name not in self._hyperopts:
-                self._hyperopts.append(class_name)
-            print(f'{class_name} [{status}] in file {file_name}')
+        self._analyze_table(raw_output, self._hyperopts)
+        for h, hdata in self._hyperopts.items():
+            print(f'[{hdata["status"]}] {h} in file {hdata["filename"]}')
+
+    def do_run_backtesting(self, arg):
+        '''Queue or execute a backtest'''
+        if arg not in self._strategies:
+            print(f'requested hyperopt class {arg} is not in the known '
+                  f'valid list {", ".join(self._hyperopts)}')
+            print('continue anyway? [y/N]')
+            c = get_key()
+            if c != b'y':
+                print('doing nothing')
+                return
+
+    def do_list_strategies(self, arg):
+        '''Retrieve strategies list from freqtrade'''
+        command = [*self.ft_cmd, 'list-strategies']
+        output = self._execute(command)
+        raw_output = output.stdout.decode('UTF-8')
+        self._analyze_table(raw_output, self._strategies)
+        for s, sdata in self._strategies.items():
+            print(f'[{sdata["status"]}] {s} in file {sdata["filename"]}')
 
     def complete_queue(self, text, line, begidx, endidx):
         keywords = ['list', 'clear', 'remove', 'movefirst', 'outputfile']
